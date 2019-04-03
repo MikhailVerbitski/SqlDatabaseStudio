@@ -8,11 +8,7 @@ namespace MedicalOrganizationOfTheCity
 {
     public class Context : IDisposable
     {
-        private string connectionString = @"Data Source=.\SQLEXPRESS;" +
-                @"AttachDbFilename=D:\Cloud\Projects\C#\MedicalOrganizationOfTheCity\MedicalOrganizationOfTheCity\DB.mdf;" +
-                "Integrated Security=True;" +
-                "Connect Timeout=30;" +
-                "User Instance=True";
+        private string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=D:\CLOUD\PROJECTS\C#\MEDICALORGANIZATIONOFTHECITY\MEDICALORGANIZATIONOFTHECITY\DB.MDF;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
         private SqlConnection connection;
         public IEnumerable<string> Tables { get { return connection.GetSchema("Tables").Rows.Cast<DataRow>().Select(a => a[2].ToString()); } }
         public Context()
@@ -49,6 +45,18 @@ namespace MedicalOrganizationOfTheCity
         {
             var response = command.ExecuteNonQuery();
             return response;
+        }
+        public void Delete(string table, int id)
+        {
+            var request = $"DELETE FROM {table} WHERE Id={id}";
+            using (var command = new SqlCommand(request, connection))
+            {
+                Delete(command);
+            }
+        }
+        public void Delete(SqlCommand command)
+        {
+            command.ExecuteNonQuery();
         }
 
         public void Dispose()

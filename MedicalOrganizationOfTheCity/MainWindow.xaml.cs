@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -12,9 +15,43 @@ namespace MedicalOrganizationOfTheCity
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        public class PairField
+        {
+            public string Text { get; set; }
+            public string Input { get; set; }
+        }
+        public class PairCombo
+        {
+            public string Text { get; set; }
+            public List<string> ComboList { get; set; }
+            public string Selected { get; set; }
+        }
+
+        private List<PairField> addListBoxFields;
+        public List<PairField> AddListBoxFields
+        {
+            get { return addListBoxFields; }
+            set
+            {
+                addListBoxFields = value;
+                OnPropertyChanged("AddListBoxFields");
+            }
+        }
+
+        private List<PairCombo> addListBoxCombo;
+        public List<PairCombo> AddListBoxCombo
+        {
+            get { return addListBoxCombo; }
+            set
+            {
+                addListBoxCombo = value;
+                OnPropertyChanged("AddListBoxCombo");
+            }
+        }
+
         public ObservableCollection<string> Tables { get; set; }
 
-        private string selectedTableName = "None";
+        private string selectedTableName;
         public string SelectedTableName
         {
             get { return selectedTableName; }
@@ -25,80 +62,149 @@ namespace MedicalOrganizationOfTheCity
             }
         }
 
+        private string message;
+        public string Message
+        {
+            get { return message; }
+            set
+            {
+                message = value;
+                OnPropertyChanged("Message");
+            }
+        }
+        
+
         public MainWindow()
         {
             InitializeComponent();
             this.DataContext = this;
-
             Tables = new ObservableCollection<string>();
-
-            using (var context = new Context())
+            try
             {
-                foreach (var item in context.Tables.Where(a => !a.Contains('_')))
+                using (var context = new Context())
                 {
-                    Tables.Add(item);
+                    foreach (var item in context.Tables)
+                    {
+                        Tables.Add(item);
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                Notification(ex.Message);
+            }
         }
+
         public void TableSelected(object sender, SelectionChangedEventArgs e)
         {
             SelectedTableName = e.AddedItems.Cast<string>().First();
             RefreshSelectedTable();
+            AddListBoxFields = new List<PairField>();
+            AddListBoxCombo = new List<PairCombo>();
         }
         public void RefreshSelectedTable()
         {
-            using (var context = new Context())
+            try
             {
-                var dataTable = context.Select("*", SelectedTableName);
-                var gridView = new GridView();
-                foreach (DataColumn item in dataTable.Columns)
+                using (var context = new Context())
                 {
-                    gridView.Columns.Add(new GridViewColumn() { Header = item.ColumnName, DisplayMemberBinding = new Binding(item.ColumnName) });
+                    var dataTable = context.Select("*", SelectedTableName);
+                    var gridView = new GridView();
+                    foreach (DataColumn item in dataTable.Columns)
+                    {
+                        gridView.Columns.Add(new GridViewColumn() { Header = item.ColumnName, DisplayMemberBinding = new Binding(item.ColumnName) });
+                    }
+                    TableView.View = gridView;
+                    TableView.ItemsSource = dataTable.DefaultView;
                 }
-                TableView.View = gridView;
-                TableView.ItemsSource = dataTable.DefaultView;
             }
-        }
-
-        public class Pair
-        {
-            public string Text { get; set; }
-            public string Input { get; set; }
-        }
-        private List<Pair> addListBox;
-        public List<Pair> AddListBox
-        {
-            get { return addListBox; }
-            set
+            catch (Exception ex)
             {
-                addListBox = value;
-                OnPropertyChanged("AddListBox");
+                Notification(ex.Message);
             }
         }
 
         public void Add(object sender, RoutedEventArgs e)
         {
-            AddListBox = (TableView.ItemsSource as DataView)
-                .Table
-                .Columns
-                .Cast<DataColumn>()
-                .Skip(1)
-                .Select(a => new Pair() { Text = a.ColumnName })
-                .ToList();
+            try
+            {
+                var columns = (TableView.ItemsSource as DataView)
+                    .Table
+                    .Columns
+                    .Cast<DataColumn>()
+                    .Skip(1)
+                    .Select(a => a.ColumnName);
+                AddListBoxFields = columns
+                    .Where(a => !a.Contains('_'))
+                    .Select(a => new PairField() { Text = a })
+                    .ToList();
+                AddListBoxCombo = columns
+                    .Where(a => a.Contains('_'))
+                    .Select(a => {
+                        using (var context = new Context())
+                        {
+                            var ids = context.Select("*", a.Split('_').First()).Rows.Cast<DataRow>().Select(b => b.ItemArray.First().ToString()).ToList();
+                            return new PairCombo()
+                            {
+                                Text = a,
+                                ComboList = ids
+                            };
+                        }
+                    })
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
         }
         public void Remove(object sender, RoutedEventArgs e)
         {
-
+            try
+            {
+                using (var context = new Context())
+                {
+                    context.Delete(SelectedTableName, Convert.ToInt32((TableView.SelectedItem as DataRowView).Row.ItemArray.First()));
+                }
+                RefreshSelectedTable();
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
         }
         public void Insert(object sender, RoutedEventArgs e)
         {
-            using (var context = new Context())
+            try
             {
-                var where = $"{SelectedTableName}({AddListBox.Select(a => a.Text).Aggregate((a, b) => $"{a}, {b}")})";
-                context.Insert(where, AddListBox.Select(a => $"'{a.Input}'").Aggregate((a, b) => $"{a}, {b}"));
+                if (AddListBoxFields.Any(a => a.Input == null) || AddListBoxCombo.Any(a => a.Selected == null))
+                {
+                    throw new Exception("Все поля должны быть заполнены");
+                }
+                using (var context = new Context())
+                {
+                    var where =  $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.Text)).Aggregate((a, b) => $"{a}, {b}")})";
+                    var valueString = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.Selected)).Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}");
+                    context.Insert(where, valueString);
+                }
+                AddListBoxFields = new List<PairField>();
+                AddListBoxFields = new List<PairField>();
+                RefreshSelectedTable();
             }
-            AddListBox = new List<Pair>();
-            RefreshSelectedTable();
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
+        }
+        public void Notification(string message)
+        {
+            this.Message = message;
+            var syn = SynchronizationContext.Current;
+            Task.Run(async () =>
+            {
+                await Task.Delay(6000);
+                syn.Post(new SendOrPostCallback(a => Message = ""), null);
+            });
         }
 
 
