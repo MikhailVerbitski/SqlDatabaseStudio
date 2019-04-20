@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace MedicalOrganizationOfTheCity
+namespace SqlDatabaseStudio
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
@@ -83,7 +83,7 @@ namespace MedicalOrganizationOfTheCity
                 OnPropertyChanged("CommandSQL");
             }
         }
-        
+
 
         public MainWindow()
         {
@@ -100,7 +100,7 @@ namespace MedicalOrganizationOfTheCity
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Notification(ex.Message);
             }
@@ -201,7 +201,7 @@ namespace MedicalOrganizationOfTheCity
                 }
                 using (var context = new Context())
                 {
-                    var where =  $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.Text)).Aggregate((a, b) => $"{a}, {b}")})";
+                    var where = $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.Text)).Aggregate((a, b) => $"{a}, {b}")})";
                     var valueString = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.Selected)).Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}");
                     context.Insert(where, valueString);
                 }

@@ -4,11 +4,11 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 
-namespace MedicalOrganizationOfTheCity
+namespace SqlDatabaseStudio
 {
     public class Context : IDisposable
     {
-        private string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=D:\CLOUD\PROJECTS\C#\MEDICALORGANIZATIONOFTHECITY\MEDICALORGANIZATIONOFTHECITY\DB.MDF;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        private string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|DB.mdf;Integrated Security=True;Connect Timeout=30;";
         private SqlConnection connection;
         public IEnumerable<string> Tables { get { return connection.GetSchema("Tables").Rows.Cast<DataRow>().Select(a => a[2].ToString()); } }
         public Context()

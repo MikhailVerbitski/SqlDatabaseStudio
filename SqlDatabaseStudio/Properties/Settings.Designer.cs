@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MedicalOrganizationOfTheCity.Properties
+namespace SqlDatabaseStudio.Properties
 {
 
 
