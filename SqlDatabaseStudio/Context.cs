@@ -44,7 +44,7 @@ namespace SqlDatabaseStudio
                     command.CommandType = CommandType.Text;
                     rows_returned = dataAdapter.Fill(data);
                 }
-                return (data.Rows.Count == 0) ? null : data;
+                return data;
             }
             finally
             {
@@ -68,8 +68,8 @@ namespace SqlDatabaseStudio
         {
             var request = $"SELECT OBJECT_NAME(f.referenced_object_id) TableName, COL_NAME(fc.parent_object_id, fc.parent_column_id) ColName FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id INNER JOIN sys.tables t ON t.OBJECT_ID = fc.referenced_object_id WHERE OBJECT_NAME(f.parent_object_id) = '{tableName}'";
             var data = Execute(request);
-            return data
-                ?.Rows
+            return (data.Rows.Count > 0) ? data
+                .Rows
                 .Cast<DataRow>()
                 .Select(a => new PairCombo()
                 {
@@ -77,7 +77,7 @@ namespace SqlDatabaseStudio
                     TableFieldName = a.ItemArray.Skip(1).First().ToString(),
                     ForeignTable = Select("*", a.ItemArray.First().ToString())
                 })
-                .ToList() ?? null;
+                .ToList() : null;
         }
 
         public void Dispose()
