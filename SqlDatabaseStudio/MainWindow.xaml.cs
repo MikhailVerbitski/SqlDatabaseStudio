@@ -84,20 +84,19 @@ namespace SqlDatabaseStudio
             }
         }
 
+        private Context context;
 
         public MainWindow()
         {
             InitializeComponent();
             this.DataContext = this;
             Tables = new ObservableCollection<string>();
+            context = new Context();
             try
             {
-                using (var context = new Context())
+                foreach (var item in context.Tables)
                 {
-                    foreach (var item in context.Tables)
-                    {
-                        Tables.Add(item);
-                    }
+                    Tables.Add(item);
                 }
             }
             catch (Exception ex)
@@ -117,11 +116,8 @@ namespace SqlDatabaseStudio
         {
             try
             {
-                using (var context = new Context())
-                {
-                    var dataTable = context.Select("*", SelectedTableName);
-                    RefreshSelectedTable(dataTable);
-                }
+                var dataTable = context.Select("*", SelectedTableName);
+                RefreshSelectedTable(dataTable);
             }
             catch (Exception ex)
             {
@@ -159,15 +155,12 @@ namespace SqlDatabaseStudio
                 AddListBoxCombo = columns
                     .Where(a => a.Contains('_'))
                     .Select(a => {
-                        using (var context = new Context())
+                        var ids = context.Select("*", a.Split('_').First()).Rows.Cast<DataRow>().Select(b => b.ItemArray.First().ToString()).ToList();
+                        return new PairCombo()
                         {
-                            var ids = context.Select("*", a.Split('_').First()).Rows.Cast<DataRow>().Select(b => b.ItemArray.First().ToString()).ToList();
-                            return new PairCombo()
-                            {
-                                Text = a,
-                                ComboList = ids
-                            };
-                        }
+                            Text = a,
+                            ComboList = ids
+                        };
                     })
                     .ToList();
             }
@@ -180,10 +173,7 @@ namespace SqlDatabaseStudio
         {
             try
             {
-                using (var context = new Context())
-                {
-                    context.Delete(SelectedTableName, Convert.ToInt32((TableView.SelectedItem as DataRowView).Row.ItemArray.First()));
-                }
+                context.Delete(SelectedTableName, Convert.ToInt32((TableView.SelectedItem as DataRowView).Row.ItemArray.First()));
                 RefreshSelectedTable();
             }
             catch (Exception ex)
@@ -199,12 +189,9 @@ namespace SqlDatabaseStudio
                 {
                     throw new Exception("Все поля должны быть заполнены");
                 }
-                using (var context = new Context())
-                {
-                    var where = $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.Text)).Aggregate((a, b) => $"{a}, {b}")})";
-                    var valueString = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.Selected)).Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}");
-                    context.Insert(where, valueString);
-                }
+                var where = $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.Text)).Aggregate((a, b) => $"{a}, {b}")})";
+                var valueString = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.Selected)).Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}");
+                context.Insert(where, valueString);
                 AddListBoxFields = new List<PairField>();
                 AddListBoxFields = new List<PairField>();
                 RefreshSelectedTable();
@@ -218,16 +205,18 @@ namespace SqlDatabaseStudio
         {
             try
             {
-                using (var context = new Context())
-                {
-                    var data = context.Execute(CommandSQL);
-                    RefreshSelectedTable(data);
-                }
+                var data = context.Execute(CommandSQL);
+                RefreshSelectedTable(data);
             }
             catch (Exception ex)
             {
                 Notification(ex.Message);
             }
+        }
+
+        public void OpenDatabase(object sender, RoutedEventArgs e)
+        {
+
         }
         public void Notification(string message)
         {
