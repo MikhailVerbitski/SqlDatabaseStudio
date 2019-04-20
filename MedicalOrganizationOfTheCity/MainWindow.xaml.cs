@@ -72,6 +72,17 @@ namespace MedicalOrganizationOfTheCity
                 OnPropertyChanged("Message");
             }
         }
+
+        private string commandSQL;
+        public string CommandSQL
+        {
+            get { return commandSQL; }
+            set
+            {
+                commandSQL = value;
+                OnPropertyChanged("CommandSQL");
+            }
+        }
         
 
         public MainWindow()
@@ -109,19 +120,26 @@ namespace MedicalOrganizationOfTheCity
                 using (var context = new Context())
                 {
                     var dataTable = context.Select("*", SelectedTableName);
-                    var gridView = new GridView();
-                    foreach (DataColumn item in dataTable.Columns)
-                    {
-                        gridView.Columns.Add(new GridViewColumn() { Header = item.ColumnName, DisplayMemberBinding = new Binding(item.ColumnName) });
-                    }
-                    TableView.View = gridView;
-                    TableView.ItemsSource = dataTable.DefaultView;
+                    RefreshSelectedTable(dataTable);
                 }
             }
             catch (Exception ex)
             {
                 Notification(ex.Message);
             }
+        }
+        public void RefreshSelectedTable(DataTable dataTable)
+        {
+            var gridView = new GridView();
+            if (dataTable != null)
+            {
+                foreach (DataColumn item in dataTable.Columns)
+                {
+                    gridView.Columns.Add(new GridViewColumn() { Header = item.ColumnName, DisplayMemberBinding = new Binding(item.ColumnName) });
+                }
+            }
+            TableView.View = gridView;
+            TableView.ItemsSource = dataTable?.DefaultView ?? new DataView();
         }
 
         public void Add(object sender, RoutedEventArgs e)
@@ -190,6 +208,21 @@ namespace MedicalOrganizationOfTheCity
                 AddListBoxFields = new List<PairField>();
                 AddListBoxFields = new List<PairField>();
                 RefreshSelectedTable();
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
+        }
+        public void SQLRequest(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                using (var context = new Context())
+                {
+                    var data = context.Execute(CommandSQL);
+                    RefreshSelectedTable(data);
+                }
             }
             catch (Exception ex)
             {

@@ -16,47 +16,21 @@ namespace MedicalOrganizationOfTheCity
             connection = new SqlConnection(connectionString);
             connection.Open();
         }
-        public DataTable Select(string what, string from, string param = "")
+        public DataTable Select(string what, string from, string param = "") => Execute($"SELECT {what} FROM {from} {param}");
+        public void Insert(string where, string valuesString) => Execute($"INSERT INTO {where} VALUES({valuesString})");
+        public void Delete(string table, int id) => Execute($"DELETE FROM {table} WHERE Id={id}");
+        public DataTable Execute(string request)
         {
-            var request = $"SELECT {what} FROM {from} {param}";
+            DataTable data = new DataTable();
+            int rows_returned;
             using (var command = new SqlCommand(request, connection))
+            using (var dataAdapter = new SqlDataAdapter(command))
             {
-                return Select(command);
+                command.CommandText = request;
+                command.CommandType = CommandType.Text;
+                rows_returned = dataAdapter.Fill(data);
             }
-        }
-        public DataTable Select(SqlCommand command)
-        {
-            using (var reader = command.ExecuteReader())
-            {
-                var dataTable = new DataTable();
-                dataTable.Load(reader);
-                return dataTable;
-            }
-        }
-        public object Insert(string where, string valuesString)
-        {
-            var request = $"INSERT INTO {where} VALUES({valuesString})";
-            using (var command = new SqlCommand(request, connection))
-            {
-                return Insert(command);
-            }
-        }
-        public object Insert(SqlCommand command)
-        {
-            var response = command.ExecuteNonQuery();
-            return response;
-        }
-        public void Delete(string table, int id)
-        {
-            var request = $"DELETE FROM {table} WHERE Id={id}";
-            using (var command = new SqlCommand(request, connection))
-            {
-                Delete(command);
-            }
-        }
-        public void Delete(SqlCommand command)
-        {
-            command.ExecuteNonQuery();
+            return (data.Rows.Count == 0) ? null : data;
         }
 
         public void Dispose()
