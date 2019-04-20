@@ -22,12 +22,6 @@ namespace SqlDatabaseStudio
             public string Text { get; set; }
             public string Input { get; set; }
         }
-        public class PairCombo
-        {
-            public string Text { get; set; }
-            public List<string> ComboList { get; set; }
-            public string Selected { get; set; }
-        }
 
         private List<PairField> addListBoxFields;
         public List<PairField> AddListBoxFields
@@ -124,6 +118,10 @@ namespace SqlDatabaseStudio
                     gridView.Columns.Add(new GridViewColumn() { Header = item.ColumnName, DisplayMemberBinding = new Binding(item.ColumnName) });
                 }
             }
+            else
+            {
+                Notification("Table is empty", 1000);
+            }
             TableView.View = gridView;
             TableView.ItemsSource = dataTable?.DefaultView ?? new DataView();
         }
@@ -132,27 +130,7 @@ namespace SqlDatabaseStudio
         {
             try
             {
-                var columns = (TableView.ItemsSource as DataView)
-                    .Table
-                    .Columns
-                    .Cast<DataColumn>()
-                    .Skip(1)
-                    .Select(a => a.ColumnName);
-                AddListBoxFields = columns
-                    .Where(a => !a.Contains('_'))
-                    .Select(a => new PairField() { Text = a })
-                    .ToList();
-                AddListBoxCombo = columns
-                    .Where(a => a.Contains('_'))
-                    .Select(a => {
-                        var ids = context.Select("*", a.Split('_').First()).Rows.Cast<DataRow>().Select(b => b.ItemArray.First().ToString()).ToList();
-                        return new PairCombo()
-                        {
-                            Text = a,
-                            ComboList = ids
-                        };
-                    })
-                    .ToList();
+                AddListBoxCombo = context.GetForeignKeys(SelectedTableName);
             }
             catch (Exception ex)
             {
@@ -237,13 +215,13 @@ namespace SqlDatabaseStudio
             }
         }
 
-        public void Notification(string message)
+        public void Notification(string message, int time = 6000)
         {
             this.Message = message;
             var syn = SynchronizationContext.Current;
             Task.Run(async () =>
             {
-                await Task.Delay(6000);
+                await Task.Delay(time);
                 syn.Post(new SendOrPostCallback(a => Message = ""), null);
             });
         }

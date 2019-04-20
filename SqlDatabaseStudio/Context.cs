@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
 
 namespace SqlDatabaseStudio
@@ -10,7 +9,7 @@ namespace SqlDatabaseStudio
     public class Context : IDisposable
     {
         private string UserPathOfDatabase;
-        private string connectionString { get { return $@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename={UserPathOfDatabase};Integrated Security=True;Connect Timeout=30;"; } } 
+        private string connectionString { get { return $@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename={UserPathOfDatabase};"; } } 
         private SqlConnection connection;
         public IEnumerable<string> Tables
         {
@@ -57,6 +56,13 @@ namespace SqlDatabaseStudio
             {
                 connection = new SqlConnection(connectionString);
             }
+        }
+
+        public List<PairCombo> GetForeignKeys(string tableName)
+        {
+            var request = $"SELECT OBJECT_NAME(f.parent_object_id) TableName, COL_NAME(fc.parent_object_id, fc.parent_column_id) ColName FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id INNER JOIN sys.tables t ON t.OBJECT_ID = fc.referenced_object_id WHERE OBJECT_NAME(f.referenced_object_id) = '{tableName}'";
+            var data = Execute(request);
+            return data.Rows.Cast<DataRow>().Select(a => new PairCombo() { Text = a.ItemArray.Skip(1).First().ToString(), ComboList = Select("Id", a.ItemArray.First().ToString()).Rows.Cast<DataRow>().Select(b => b.ItemArray.First().ToString()).ToList() }).ToList();
         }
 
         public void Dispose()
