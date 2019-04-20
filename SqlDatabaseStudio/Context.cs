@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 
 namespace SqlDatabaseStudio
 {
     public class Context : IDisposable
     {
-        private string DefaultPathOfDatabase = "|DataDirectory|DB.mdf";
         private string UserPathOfDatabase;
-        private string connectionString { get { return $@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename={UserPathOfDatabase ?? DefaultPathOfDatabase};Integrated Security=True;Connect Timeout=30;"; } } 
+        private string connectionString { get { return $@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename={UserPathOfDatabase};Integrated Security=True;Connect Timeout=30;"; } } 
         private SqlConnection connection;
         public IEnumerable<string> Tables
         {
@@ -48,12 +48,15 @@ namespace SqlDatabaseStudio
         }
         public void ChangeDatabase(string path = null)
         {
-            if(connection != null)
+            if (connection != null)
             {
                 connection.Dispose();
             }
             UserPathOfDatabase = path;
-            connection = new SqlConnection(connectionString);
+            if(path != null)
+            {
+                connection = new SqlConnection(connectionString);
+            }
         }
 
         public void Dispose()

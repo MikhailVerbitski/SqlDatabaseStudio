@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -91,18 +93,6 @@ namespace SqlDatabaseStudio
             InitializeComponent();
             this.DataContext = this;
             Tables = new ObservableCollection<string>();
-            context = new Context();
-            try
-            {
-                foreach (var item in context.Tables)
-                {
-                    Tables.Add(item);
-                }
-            }
-            catch (Exception ex)
-            {
-                Notification(ex.Message);
-            }
         }
 
         public void TableSelected(object sender, SelectionChangedEventArgs e)
@@ -216,8 +206,37 @@ namespace SqlDatabaseStudio
 
         public void OpenDatabase(object sender, RoutedEventArgs e)
         {
-
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Database (*.mdf)|*.mdf";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                var path = openFileDialog.FileName;
+                OpenDatabase(path);
+            }
         }
+        private void OpenDatabase(string path = null)
+        {
+            if(context == null)
+            {
+                context = new Context(path);
+            }
+            else
+            {
+                context.ChangeDatabase(path);
+            }
+            try
+            {
+                foreach (var item in context.Tables)
+                {
+                    Tables.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
+        }
+
         public void Notification(string message)
         {
             this.Message = message;

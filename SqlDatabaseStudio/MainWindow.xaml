@@ -26,8 +26,9 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <Button Content="Select data base" 
-                    FontSize="18"/>
+            <Button Content="Open database" 
+                    FontSize="18"
+                    Click="OpenDatabase"/>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -172,6 +173,8 @@
                 <Button Grid.Row="4" Content="Insert" Click="Insert"/>
             </Grid>
         </Grid>
-        <TextBlock Grid.Row="3" Text="{Binding Message}"/>
+        <TextBlock Grid.Row="3" 
+                   Text="{Binding Message}" 
+                   TextWrapping="Wrap"/>
     </Grid>
 </Window>
