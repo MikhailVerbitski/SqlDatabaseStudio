@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SqlDatabaseStudio"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="600" Width="1200">
     
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
@@ -58,9 +58,11 @@
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180px"/>
+                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="200px"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition/>
@@ -90,7 +92,12 @@
                 </ListBox>
             </Grid>
 
-            <Grid Grid.Column="1">
+            <GridSplitter Grid.Column="1" 
+                          Width="3" 
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Stretch"/>
+
+            <Grid Grid.Column="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
@@ -118,7 +125,12 @@
                 </Grid>
             </Grid>
 
-            <Grid Grid.Column="2">
+            <GridSplitter Grid.Column="3" 
+                          Width="3" 
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Stretch"/>
+
+            <Grid Grid.Column="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
@@ -151,20 +163,28 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
                 <TextBlock Grid.Row="2"
-                           Text="Setting up links"
+                           Text="foreign keys (id)"
                            HorizontalAlignment="Center"
                            FontSize="16"/>
-                <ListBox Grid.Row="3" ItemsSource="{Binding AddListBoxCombo}">
+                <ListBox Grid.Row="3" ItemsSource="{Binding AddListBoxCombo}" Name="ForeignKeyFields">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition/>
                                     <ColumnDefinition/>
+                                    <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="{Binding Text}"/>
-                                <ComboBox Grid.Column="1" ItemsSource="{Binding ComboList}" SelectedItem="{Binding Selected}"/>
+                                <TextBlock Grid.Column="0" 
+                                           Text="{Binding Text}"/>
+                                <ComboBox Grid.Column="1" 
+                                          ItemsSource="{Binding ComboList}" 
+                                          SelectedItem="{Binding Selected}"/>
+                                <ComboBox Grid.Column="2" 
+                                          ItemsSource="{Binding FieldsList}" 
+                                          SelectedItem="{Binding FieldSelected}"
+                                          SelectionChanged="FieldChanged"/>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -175,6 +195,8 @@
         </Grid>
         <TextBlock Grid.Row="3" 
                    Text="{Binding Message}" 
+                   FontSize="22"
+                   Foreground="OrangeRed"
                    TextWrapping="Wrap"/>
     </Grid>
 </Window>

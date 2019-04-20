@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -130,7 +129,14 @@ namespace SqlDatabaseStudio
         {
             try
             {
-                AddListBoxCombo = context.GetForeignKeys(SelectedTableName);
+                var columns = (TableView.ItemsSource as DataView)
+                       .Table
+                       .Columns
+                       .Cast<DataColumn>()
+                       .Skip(1)
+                       .Select(a => a.ColumnName);
+                AddListBoxCombo = context.GetForeignKeys(SelectedTableName) ?? new List<PairCombo>();
+                AddListBoxFields = columns.Except(AddListBoxCombo.Select(a => a.TableFieldName)).Select(a => new PairField() { Text = a }).ToList();
             }
             catch (Exception ex)
             {
@@ -157,8 +163,8 @@ namespace SqlDatabaseStudio
                 {
                     throw new Exception("Все поля должны быть заполнены");
                 }
-                var where = $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.Text)).Aggregate((a, b) => $"{a}, {b}")})";
-                var valueString = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.Selected)).Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}");
+                var where = $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.TableFieldName)).Aggregate((a, b) => $"{a}, {b}")})";
+                var valueString = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.GetId())).Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}");
                 context.Insert(where, valueString);
                 AddListBoxFields = new List<PairField>();
                 AddListBoxFields = new List<PairField>();
@@ -175,6 +181,7 @@ namespace SqlDatabaseStudio
             {
                 var data = context.Execute(CommandSQL);
                 RefreshSelectedTable(data);
+                SelectedTableName = "SQL Request";
             }
             catch (Exception ex)
             {
@@ -191,6 +198,10 @@ namespace SqlDatabaseStudio
                 var path = openFileDialog.FileName;
                 OpenDatabase(path);
             }
+        }
+        public void FieldChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ForeignKeyFields.Items.Refresh();
         }
         private void OpenDatabase(string path = null)
         {

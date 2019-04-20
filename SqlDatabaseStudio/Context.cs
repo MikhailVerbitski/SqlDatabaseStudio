@@ -32,18 +32,24 @@ namespace SqlDatabaseStudio
         public void Delete(string table, int id) => Execute($"DELETE FROM {table} WHERE Id={id}");
         public DataTable Execute(string request)
         {
-            connection.Open();
-            DataTable data = new DataTable();
-            int rows_returned;
-            using (var command = new SqlCommand(request, connection))
-            using (var dataAdapter = new SqlDataAdapter(command))
+            try
             {
-                command.CommandText = request;
-                command.CommandType = CommandType.Text;
-                rows_returned = dataAdapter.Fill(data);
+                connection.Open();
+                DataTable data = new DataTable();
+                int rows_returned;
+                using (var command = new SqlCommand(request, connection))
+                using (var dataAdapter = new SqlDataAdapter(command))
+                {
+                    command.CommandText = request;
+                    command.CommandType = CommandType.Text;
+                    rows_returned = dataAdapter.Fill(data);
+                }
+                return (data.Rows.Count == 0) ? null : data;
             }
-            connection.Close();
-            return (data.Rows.Count == 0) ? null : data;
+            finally
+            {
+                connection.Close();
+            }
         }
         public void ChangeDatabase(string path = null)
         {
@@ -60,9 +66,18 @@ namespace SqlDatabaseStudio
 
         public List<PairCombo> GetForeignKeys(string tableName)
         {
-            var request = $"SELECT OBJECT_NAME(f.parent_object_id) TableName, COL_NAME(fc.parent_object_id, fc.parent_column_id) ColName FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id INNER JOIN sys.tables t ON t.OBJECT_ID = fc.referenced_object_id WHERE OBJECT_NAME(f.referenced_object_id) = '{tableName}'";
+            var request = $"SELECT OBJECT_NAME(f.referenced_object_id) TableName, COL_NAME(fc.parent_object_id, fc.parent_column_id) ColName FROM sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc ON f.OBJECT_ID = fc.constraint_object_id INNER JOIN sys.tables t ON t.OBJECT_ID = fc.referenced_object_id WHERE OBJECT_NAME(f.parent_object_id) = '{tableName}'";
             var data = Execute(request);
-            return data.Rows.Cast<DataRow>().Select(a => new PairCombo() { Text = a.ItemArray.Skip(1).First().ToString(), ComboList = Select("Id", a.ItemArray.First().ToString()).Rows.Cast<DataRow>().Select(b => b.ItemArray.First().ToString()).ToList() }).ToList();
+            return data
+                ?.Rows
+                .Cast<DataRow>()
+                .Select(a => new PairCombo()
+                {
+                    Text = a.ItemArray.First().ToString(),
+                    TableFieldName = a.ItemArray.Skip(1).First().ToString(),
+                    ForeignTable = Select("*", a.ItemArray.First().ToString())
+                })
+                .ToList() ?? null;
         }
 
         public void Dispose()
