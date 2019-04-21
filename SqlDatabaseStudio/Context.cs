@@ -28,7 +28,8 @@ namespace SqlDatabaseStudio
         }
 
         public DataTable Select(string what, string from, string param = "") => Execute($"SELECT {what} FROM {from} {param}");
-        public void Insert(string where, string valuesString) => Execute($"INSERT INTO {where} VALUES({valuesString})");
+        public void Insert(string table, IEnumerable<string> columns, IEnumerable<string> values) => Execute($"INSERT INTO {$"{table}({columns.Aggregate((a, b) => $"{a}, {b}")})"} VALUES({values.Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}")})");
+        public void Update(string table, int id, IEnumerable<string> columns, IEnumerable<string> values) => Execute($"UPDATE {table} SET {Enumerable.Range(0, columns.Count()).Select(a => $"{columns.ElementAt(a)} = '{values.ElementAt(a)}'").Aggregate((a,b) => $"{a}, {b}")} WHERE Id = {id}");
         public void Delete(string table, int id) => Execute($"DELETE FROM {table} WHERE Id={id}");
         public DataTable Execute(string request)
         {

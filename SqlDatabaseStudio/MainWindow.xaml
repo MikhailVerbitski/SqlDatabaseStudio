@@ -97,16 +97,18 @@
                     HorizontalAlignment="Center"
                     Content="{Binding SelectedTableName, FallbackValue=Table, TargetNullValue=Table}"/>
                 <ListView Name="TableView"
-                      Grid.Row="1">
+                          Grid.Row="1">
                 </ListView>
 
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition/>
+                        <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Content="Add" Click="Add"/>
-                    <Button Grid.Column="1" Content="Remove" Click="Remove"/>
+                    <Button Grid.Column="1" Content="Update" Click="Update"/>
+                    <Button Grid.Column="2" Content="Remove" Click="Remove"/>
                 </Grid>
             </Grid>
 
@@ -172,7 +174,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="4" Content="Insert" Click="Insert"/>
+                <Button Grid.Row="4" Content="Save" Click="Save"/>
             </Grid>
         </Grid>
         <TextBlock Grid.Row="3" 

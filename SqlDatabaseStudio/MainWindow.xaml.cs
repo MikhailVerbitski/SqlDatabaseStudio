@@ -80,6 +80,7 @@ namespace SqlDatabaseStudio
         }
 
         private Context context;
+        private bool InsertOrUpdate = false;
 
         public MainWindow()
         {
@@ -90,53 +91,43 @@ namespace SqlDatabaseStudio
 
         public void TableSelected(object sender, SelectionChangedEventArgs e)
         {
-            SelectedTableName = e.AddedItems.Cast<string>().First();
-            RefreshSelectedTable();
-            AddListBoxFields = new List<PairField>();
-            AddListBoxCombo = new List<PairCombo>();
-        }
-        public void RefreshSelectedTable()
-        {
             try
             {
-                var dataTable = context.Select("*", SelectedTableName);
-                RefreshSelectedTable(dataTable);
+                SelectedTableName = e.AddedItems.Cast<string>().First();
+                RefreshSelectedTable();
             }
             catch (Exception ex)
             {
                 Notification(ex.Message);
             }
         }
-        public void RefreshSelectedTable(DataTable dataTable)
-        {
-            var gridView = new GridView();
-            if (dataTable != null)
-            {
-                foreach (DataColumn item in dataTable.Columns)
-                {
-                    gridView.Columns.Add(new GridViewColumn() { Header = item.ColumnName, DisplayMemberBinding = new Binding(item.ColumnName) });
-                }
-            }
-            else
-            {
-                Notification("Table is empty", 1000);
-            }
-            TableView.View = gridView;
-            TableView.ItemsSource = dataTable?.DefaultView ?? new DataView();
-        }
-
         public void Add(object sender, RoutedEventArgs e)
         {
             try
             {
                 var columns = (TableView.ItemsSource as DataView)
-                       .Table
-                       .Columns
-                       .Cast<DataColumn>()
-                       .Skip(1)
-                       .Select(a => a.ColumnName);
-                AddListBoxCombo = context.GetForeignKeys(SelectedTableName) ?? new List<PairCombo>();
-                AddListBoxFields = columns.Except(AddListBoxCombo.Select(a => a.TableFieldName)).Select(a => new PairField() { Text = a }).ToList();
+                        .Table
+                        .Columns
+                        .Cast<DataColumn>()
+                        .Skip(1)
+                        .Select(a => a.ColumnName);
+                RowDataEntryField(columns);
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
+        }
+        public void Update(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var columns = (TableView.ItemsSource as DataView).Table.Columns.Cast<DataColumn>().Select(a => a.ToString()).ToList();
+                var columnsData = (TableView.SelectedItem as DataRowView).Row.ItemArray.Select(a => a.ToString()).ToList();
+                RowDataEntryField(columns);
+                AddListBoxCombo.ForEach(a => a.Selected = columnsData[columns.IndexOf(a.TableFieldName)]);
+                AddListBoxFields.ForEach(a => a.Input = columnsData[columns.IndexOf(a.Text)]);
+                InsertOrUpdate = true;
             }
             catch (Exception ex)
             {
@@ -155,19 +146,25 @@ namespace SqlDatabaseStudio
                 Notification(ex.Message);
             }
         }
-        public void Insert(object sender, RoutedEventArgs e)
+        public void Save(object sender, RoutedEventArgs e)
         {
             try
             {
+                var columns = AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.TableFieldName));
+                var values = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.GetId()));
                 if (AddListBoxFields.Any(a => a.Input == null) || AddListBoxCombo.Any(a => a.Selected == null))
                 {
-                    throw new Exception("Все поля должны быть заполнены");
+                    Notification("Все поля должны быть заполнены");
+                    return;
                 }
-                var where = $"{SelectedTableName}({AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.TableFieldName)).Aggregate((a, b) => $"{a}, {b}")})";
-                var valueString = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.GetId())).Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}");
-                context.Insert(where, valueString);
-                AddListBoxFields = new List<PairField>();
-                AddListBoxFields = new List<PairField>();
+                else if(InsertOrUpdate)
+                {
+                    context.Update(SelectedTableName, Convert.ToInt32(values.First()), columns.Skip(1), values.Skip(1));
+                }
+                else
+                {
+                    context.Insert(SelectedTableName, columns, values);
+                }
                 RefreshSelectedTable();
             }
             catch (Exception ex)
@@ -188,20 +185,64 @@ namespace SqlDatabaseStudio
                 Notification(ex.Message);
             }
         }
-
         public void OpenDatabase(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Database (*.mdf)|*.mdf";
-            if (openFileDialog.ShowDialog() == true)
+            try
             {
-                var path = openFileDialog.FileName;
-                OpenDatabase(path);
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                openFileDialog.Filter = "Database (*.mdf)|*.mdf";
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    var path = openFileDialog.FileName;
+                    OpenDatabase(path);
+                }   
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
             }
         }
         public void FieldChanged(object sender, SelectionChangedEventArgs e)
         {
-            ForeignKeyFields.Items.Refresh();
+            try
+            {
+                ForeignKeyFields.Items.Refresh();
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
+        }
+
+        private void RefreshSelectedTable()
+        {
+            InsertOrUpdate = false;
+            AddListBoxFields = new List<PairField>();
+            AddListBoxCombo = new List<PairCombo>();
+            var dataTable = context.Select("*", SelectedTableName);
+            RefreshSelectedTable(dataTable);
+        }
+        private void RefreshSelectedTable(DataTable dataTable)
+        {
+            var gridView = new GridView();
+            if (dataTable != null)
+            {
+                foreach (DataColumn item in dataTable.Columns)
+                {
+                    gridView.Columns.Add(new GridViewColumn() { Header = item.ColumnName, DisplayMemberBinding = new Binding(item.ColumnName) });
+                }
+            }
+            else
+            {
+                Notification("Table is empty", 1000);
+            }
+            TableView.View = gridView;
+            TableView.ItemsSource = dataTable?.DefaultView ?? new DataView();
+        }
+        private void RowDataEntryField(IEnumerable<string> columns)
+        {
+            AddListBoxCombo = context.GetForeignKeys(SelectedTableName) ?? new List<PairCombo>();
+            AddListBoxFields = columns.Except(AddListBoxCombo.Select(a => a.TableFieldName)).Select(a => new PairField() { Text = a }).ToList();
         }
         private void OpenDatabase(string path = null)
         {
@@ -225,8 +266,7 @@ namespace SqlDatabaseStudio
                 Notification(ex.Message);
             }
         }
-
-        public void Notification(string message, int time = 6000)
+        private void Notification(string message, int time = 6000)
         {
             this.Message = message;
             var syn = SynchronizationContext.Current;
@@ -236,7 +276,6 @@ namespace SqlDatabaseStudio
                 syn.Post(new SendOrPostCallback(a => Message = ""), null);
             });
         }
-
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged([CallerMemberName]string prop = "")
