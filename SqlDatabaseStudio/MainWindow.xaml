@@ -5,7 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SqlDatabaseStudio"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="1200" MinHeight="400px" MinWidth="600px">
+        Title="MainWindow" Height="600" Width="1200" MinHeight="400px" MinWidth="800px">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="FontSize" Value="18"/>
+        </Style>
+        <Style TargetType="GridSplitter">
+            <Setter Property="Width" Value="5"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+        </Style>
+    </Window.Resources>
     
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
@@ -42,6 +53,10 @@
                        VerticalAlignment="Center"/>
             <TextBox Grid.Column="1"
                      Margin="3px"
+                     FontSize="14"
+                     MinHeight="60px"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
                      Text="{Binding CommandSQL}"/>
             <Button Grid.Column="2" 
                     Content="Request" 
@@ -52,11 +67,13 @@
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="180px" MinWidth="80px"/>
+                <ColumnDefinition Width="0.25*" MinWidth="80px"/>
                 <ColumnDefinition Width="auto"/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="*" MinWidth="200px"/>
                 <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="200px" MinWidth="120px"/>
+                <ColumnDefinition Width="0.25*" MinWidth="120px"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="0.25*" MinWidth="120px"/>
             </Grid.ColumnDefinitions>
 
             <Grid Grid.Column="0">
@@ -65,10 +82,10 @@
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0"
-                    FontSize="22" 
-                    HorizontalAlignment="Center"
-                    Content="Tables"/>
+                <TextBlock Grid.Row="0"
+                           FontSize="22"
+                           HorizontalAlignment="Center"
+                           Text="Tables"/>
                 <ListBox Grid.Row="1"
                      ItemsSource="{Binding Tables}"
                      SelectionChanged="TableSelected">
@@ -80,10 +97,7 @@
                 </ListBox>
             </Grid>
 
-            <GridSplitter Grid.Column="1" 
-                          Width="3" 
-                          HorizontalAlignment="Center" 
-                          VerticalAlignment="Stretch"/>
+            <GridSplitter Grid.Column="1"/>
 
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
@@ -92,10 +106,10 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0"
-                    FontSize="22" 
-                    HorizontalAlignment="Center"
-                    Content="{Binding SelectedTableName, FallbackValue=Table, TargetNullValue=Table}"/>
+                <TextBlock Grid.Row="0"
+                           FontSize="22" 
+                           HorizontalAlignment="Center"
+                           Text="{Binding SelectedTableName, FallbackValue=Table, TargetNullValue=Table}"/>
                 <ListView Name="TableView"
                           Grid.Row="1">
                 </ListView>
@@ -112,10 +126,7 @@
                 </Grid>
             </Grid>
 
-            <GridSplitter Grid.Column="3" 
-                          Width="3" 
-                          HorizontalAlignment="Center" 
-                          VerticalAlignment="Stretch"/>
+            <GridSplitter Grid.Column="3"/>
 
             <Grid Grid.Column="4">
                 <Grid.RowDefinitions>
@@ -126,10 +137,10 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
 
-                <Label Grid.Row="0"
-                    FontSize="22" 
-                    HorizontalAlignment="Center"
-                    Content="Add"/>
+                <TextBlock Grid.Row="0"
+                           FontSize="22"
+                           HorizontalAlignment="Center"
+                           Text="Add"/>
 
                 <ListBox Grid.Row="1" ItemsSource="{Binding AddListBoxFields}">
                     <ListBox.ItemTemplate>
@@ -175,6 +186,24 @@
                 </ListBox>
 
                 <Button Grid.Row="4" Content="Save" Click="Save"/>
+            </Grid>
+            
+            <GridSplitter Grid.Column="5"/>
+
+            <Grid Grid.Column="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Stored procedure"
+                           HorizontalAlignment="Center"
+                           FontSize="22"/>
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding StoredProcedures}"
+                         MouseDoubleClick="ExecuteStoredProcedure">
+                    
+                </ListBox>
             </Grid>
         </Grid>
         <TextBlock Grid.Row="3" 

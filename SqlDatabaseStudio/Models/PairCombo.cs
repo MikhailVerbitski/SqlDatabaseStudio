@@ -2,12 +2,16 @@
 using System.Data;
 using System.Linq;
 
-namespace SqlDatabaseStudio
+namespace SqlDatabaseStudio.Models
 {
-    public class PairCombo
+    public class TableField
     {
         public string Text { get; set; }
         public string TableFieldName { get; set; }
+        public string FieldSelected { get; set; }
+        public DataTable ForeignTable { get; set; }
+        public string Selected { get; set; }
+
         private int indexField;
 
         public IEnumerable<string> ComboList
@@ -19,7 +23,6 @@ namespace SqlDatabaseStudio
                 return items;
             }
         }
-        public string Selected { get; set; }
         public IEnumerable<string> FieldsList
         {
             get
@@ -32,13 +35,6 @@ namespace SqlDatabaseStudio
                 return fields;
             }
         }
-        public string FieldSelected { get; set; }
-
-        public DataTable ForeignTable { get; set; }
-
-        public string GetId()
-        {
-            return ForeignTable.Rows.Cast<DataRow>().First(a => a.ItemArray[indexField].ToString() == Selected).ItemArray.First().ToString();
-        }
+        public string GetId() => ForeignTable.Rows.Cast<DataRow>().First(a => a.ItemArray[indexField].ToString() == Selected).ItemArray.First().ToString();
     }
 }

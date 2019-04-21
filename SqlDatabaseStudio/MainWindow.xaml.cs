@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using SqlDatabaseStudio.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,19 +12,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 
 namespace SqlDatabaseStudio
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public class PairField
-        {
-            public string Text { get; set; }
-            public string Input { get; set; }
-        }
-
-        private List<PairField> addListBoxFields;
-        public List<PairField> AddListBoxFields
+        private List<PairTableField> addListBoxFields;
+        public List<PairTableField> AddListBoxFields
         {
             get { return addListBoxFields; }
             set
@@ -33,8 +29,8 @@ namespace SqlDatabaseStudio
             }
         }
 
-        private List<PairCombo> addListBoxCombo;
-        public List<PairCombo> AddListBoxCombo
+        private List<TableField> addListBoxCombo;
+        public List<TableField> AddListBoxCombo
         {
             get { return addListBoxCombo; }
             set
@@ -43,6 +39,8 @@ namespace SqlDatabaseStudio
                 OnPropertyChanged("AddListBoxCombo");
             }
         }
+        
+        public ObservableCollection<string> StoredProcedures { get; set; }
 
         public ObservableCollection<string> Tables { get; set; }
 
@@ -86,7 +84,6 @@ namespace SqlDatabaseStudio
         {
             InitializeComponent();
             this.DataContext = this;
-            Tables = new ObservableCollection<string>();
         }
 
         public void TableSelected(object sender, SelectionChangedEventArgs e)
@@ -195,7 +192,7 @@ namespace SqlDatabaseStudio
                 {
                     var path = openFileDialog.FileName;
                     OpenDatabase(path);
-                }   
+                }
             }
             catch (Exception ex)
             {
@@ -213,14 +210,33 @@ namespace SqlDatabaseStudio
                 Notification(ex.Message);
             }
         }
+        public void ExecuteStoredProcedure(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                var procedureName = (sender as ListBox).SelectedItem as string;
+                context.ExecuteStoredProcedure(procedureName);
+                TableView.View = new GridView();
+                TableView.ItemsSource = new DataView();
+                UpdateTables();
+                UpdateStoredProcedures();
+            }
+            catch (Exception ex)
+            {
+                Notification(ex.Message);
+            }
+        }
 
         private void RefreshSelectedTable()
         {
             InsertOrUpdate = false;
-            AddListBoxFields = new List<PairField>();
-            AddListBoxCombo = new List<PairCombo>();
-            var dataTable = context.Select("*", SelectedTableName);
-            RefreshSelectedTable(dataTable);
+            AddListBoxFields = new List<PairTableField>();
+            AddListBoxCombo = new List<TableField>();
+            if(SelectedTableName != "" && SelectedTableName != null)
+            {
+                var dataTable = context.Select("*", SelectedTableName);
+                RefreshSelectedTable(dataTable);
+            }
         }
         private void RefreshSelectedTable(DataTable dataTable)
         {
@@ -241,8 +257,8 @@ namespace SqlDatabaseStudio
         }
         private void RowDataEntryField(IEnumerable<string> columns)
         {
-            AddListBoxCombo = context.GetForeignKeys(SelectedTableName) ?? new List<PairCombo>();
-            AddListBoxFields = columns.Except(AddListBoxCombo.Select(a => a.TableFieldName)).Select(a => new PairField() { Text = a }).ToList();
+            AddListBoxCombo = context.GetForeignKeys(SelectedTableName) ?? new List<TableField>();
+            AddListBoxFields = columns.Except(AddListBoxCombo.Select(a => a.TableFieldName)).Select(a => new PairTableField() { Text = a }).ToList();
         }
         private void OpenDatabase(string path = null)
         {
@@ -256,15 +272,23 @@ namespace SqlDatabaseStudio
             }
             try
             {
-                foreach (var item in context.Tables)
-                {
-                    Tables.Add(item);
-                }
+                UpdateTables();
+                UpdateStoredProcedures();
             }
             catch (Exception ex)
             {
                 Notification(ex.Message);
             }
+        }
+        private void UpdateTables()
+        {
+            Tables = new ObservableCollection<string>(context.Tables);
+            OnPropertyChanged("Tables");
+        }
+        private void UpdateStoredProcedures()
+        {
+            StoredProcedures = new ObservableCollection<string>(context.StoredProcedures);
+            OnPropertyChanged("StoredProcedures");
         }
         private void Notification(string message, int time = 6000)
         {

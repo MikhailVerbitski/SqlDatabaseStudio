@@ -85,7 +85,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PairCombo.cs" />
+    <Compile Include="Models\PairCombo.cs" />
+    <Compile Include="Models\PairField.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
