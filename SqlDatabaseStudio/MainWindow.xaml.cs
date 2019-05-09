@@ -77,6 +77,17 @@ namespace SqlDatabaseStudio
             }
         }
 
+        private string currentTheme = "Light";
+        public string CurrentTheme
+        {
+            get { return currentTheme; }
+            set
+            {
+                currentTheme = value;
+                OnPropertyChanged("CurrentTheme");
+            }
+        }
+
         private Context context;
         private bool InsertOrUpdate = false;
 
@@ -84,6 +95,16 @@ namespace SqlDatabaseStudio
         {
             InitializeComponent();
             this.DataContext = this;
+        }
+
+        public void ChangeTheme(object sender, EventArgs e)
+        {
+            List<string> styles = new List<string> { "Light", "Dark" };
+            CurrentTheme = styles.First(a => a != (sender as MenuItem).Header as string);
+            var uri = new Uri(CurrentTheme + ".xaml", UriKind.Relative);
+            ResourceDictionary resourceDict = Application.LoadComponent(uri) as ResourceDictionary;
+            Application.Current.Resources.Clear();
+            Application.Current.Resources.MergedDictionaries.Add(resourceDict);
         }
 
         public void TableSelected(object sender, SelectionChangedEventArgs e)
@@ -176,6 +197,7 @@ namespace SqlDatabaseStudio
                 var data = context.Execute(CommandSQL);
                 RefreshSelectedTable(data);
                 SelectedTableName = "SQL Request";
+                UpdateStoredProcedures();
             }
             catch (Exception ex)
             {
@@ -219,7 +241,6 @@ namespace SqlDatabaseStudio
                 TableView.View = new GridView();
                 TableView.ItemsSource = new DataView();
                 UpdateTables();
-                UpdateStoredProcedures();
             }
             catch (Exception ex)
             {

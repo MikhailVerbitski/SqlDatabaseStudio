@@ -8,64 +8,71 @@
         Title="MainWindow" Height="600" Width="1200" MinHeight="400px" MinWidth="800px">
 
     <Window.Resources>
-        <Style TargetType="Button">
+        <!--<Style TargetType="Button">
             <Setter Property="FontSize" Value="18"/>
         </Style>
         <Style TargetType="GridSplitter">
             <Setter Property="Width" Value="5"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>
-        </Style>
+        </Style>-->
+        <!--<Style TargetType="Border">
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#F9F9F9"/>
+        </Style>-->
     </Window.Resources>
     
-    <Grid Margin="10">
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="auto" MinHeight="60px"/>
+            <RowDefinition Height="5px"/>
+            <RowDefinition MinHeight="200px"/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
+        <Menu Grid.Row="0" FontSize="18">
+            <MenuItem Header="Open database" Click="OpenDatabase"/>
+            <MenuItem Header="{Binding CurrentTheme}" Click="ChangeTheme"/>
+        </Menu>
 
-            <Button Content="Open database" 
-                    FontSize="18"
-                    Click="OpenDatabase"/>
-        </Grid>
+        <Border Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="SQL" 
+                           FontSize="22" 
+                           Margin="3px"
+                           VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1"
+                         Margin="3px"
+                         FontSize="14"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         Text="{Binding CommandSQL}"/>
+                <Button Grid.Column="2" 
+                        Content="Request" 
+                        Margin="3px"
+                        FontSize="18"
+                        Click="SQLRequest"/>
+            </Grid>
+        </Border>
 
-            <TextBlock Grid.Column="0"
-                       Text="SQL" 
-                       FontSize="22" 
-                       Margin="3px"
-                       VerticalAlignment="Center"/>
-            <TextBox Grid.Column="1"
-                     Margin="3px"
-                     FontSize="14"
-                     MinHeight="60px"
-                     TextWrapping="Wrap"
-                     AcceptsReturn="True"
-                     Text="{Binding CommandSQL}"/>
-            <Button Grid.Column="2" 
-                    Content="Request" 
-                    Margin="3px"
-                    FontSize="18"
-                    Click="SQLRequest"/>
-        </Grid>
+        <GridSplitter Grid.Row="2"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Width="auto"
+                    ResizeDirection="Rows"/>
 
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="0.25*" MinWidth="80px"/>
                 <ColumnDefinition Width="auto"/>
@@ -73,140 +80,148 @@
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="0.25*" MinWidth="120px"/>
                 <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="0.25*" MinWidth="120px"/>
+                <ColumnDefinition Width="auto" MinWidth="120px"/>
             </Grid.ColumnDefinitions>
 
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
+            <Border Grid.Column="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0"
+                    <TextBlock Grid.Row="0"
                            FontSize="22"
                            HorizontalAlignment="Center"
                            Text="Tables"/>
-                <ListBox Grid.Row="1"
-                     ItemsSource="{Binding Tables}"
-                     SelectionChanged="TableSelected">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"/>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding Tables}"
+                             SelectionChanged="TableSelected">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
 
             <GridSplitter Grid.Column="1"/>
 
-            <Grid Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition/>
-                    <RowDefinition Height="auto"/>
-                </Grid.RowDefinitions>
+            <Border Grid.Column="2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0"
+                    <TextBlock Grid.Row="0"
                            FontSize="22" 
                            HorizontalAlignment="Center"
                            Text="{Binding SelectedTableName, FallbackValue=Table, TargetNullValue=Table}"/>
-                <ListView Name="TableView"
-                          Grid.Row="1">
-                </ListView>
-
-                <Grid Grid.Row="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Content="Add" Click="Add"/>
-                    <Button Grid.Column="1" Content="Update" Click="Update"/>
-                    <Button Grid.Column="2" Content="Remove" Click="Remove"/>
+                    <ListView Name="TableView"
+                              Grid.Row="1"/>
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Add" Click="Add"/>
+                        <Button Grid.Column="1" Content="Update" Click="Update"/>
+                        <Button Grid.Column="2" Content="Remove" Click="Remove"/>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </Border>
 
             <GridSplitter Grid.Column="3"/>
 
-            <Grid Grid.Column="4">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition/>
-                    <RowDefinition Height="auto"/>
-                </Grid.RowDefinitions>
+            <Border Grid.Column="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0"
+                    <TextBlock Grid.Row="0"
                            FontSize="22"
                            HorizontalAlignment="Center"
                            Text="Add"/>
 
-                <ListBox Grid.Row="1" ItemsSource="{Binding AddListBoxFields}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition/>
-                                    <ColumnDefinition/>
-                                </Grid.ColumnDefinitions>
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding AddListBoxFields}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="{Binding Text}"/>
-                                <TextBox Grid.Column="1" Text="{Binding Input}"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-                <TextBlock Grid.Row="2"
+                                    <TextBlock Grid.Column="0" Text="{Binding Text}"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Input}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Grid.Row="2"
                            Text="foreign keys (id)"
                            HorizontalAlignment="Center"
                            FontSize="16"/>
-                <ListBox Grid.Row="3" ItemsSource="{Binding AddListBoxCombo}" Name="ForeignKeyFields">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition/>
-                                    <ColumnDefinition/>
-                                    <ColumnDefinition/>
-                                </Grid.ColumnDefinitions>
+                    <ListBox Grid.Row="3"
+                         ItemsSource="{Binding AddListBoxCombo}" 
+                         Name="ForeignKeyFields">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" 
+                                    <TextBlock Grid.Column="0" 
                                            Text="{Binding Text}"/>
-                                <ComboBox Grid.Column="1" 
+                                    <ComboBox Grid.Column="1" 
                                           ItemsSource="{Binding ComboList}" 
                                           SelectedItem="{Binding Selected}"/>
-                                <ComboBox Grid.Column="2" 
+                                    <ComboBox Grid.Column="2" 
                                           ItemsSource="{Binding FieldsList}" 
                                           SelectedItem="{Binding FieldSelected}"
                                           SelectionChanged="FieldChanged"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
 
-                <Button Grid.Row="4" Content="Save" Click="Save"/>
-            </Grid>
-            
+                    <Button Grid.Row="4" Content="Save" Click="Save"/>
+                </Grid>
+            </Border>
+
             <GridSplitter Grid.Column="5"/>
 
-            <Grid Grid.Column="6">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
+            <Border Grid.Column="6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
 
-                <TextBlock Text="Stored procedure"
+                    <TextBlock Text="Stored procedure"
                            HorizontalAlignment="Center"
                            FontSize="22"/>
-                <ListBox Grid.Row="1"
+                    <ListBox Grid.Row="1"
                          ItemsSource="{Binding StoredProcedures}"
-                         MouseDoubleClick="ExecuteStoredProcedure">
-                    
-                </ListBox>
-            </Grid>
+                         MouseDoubleClick="ExecuteStoredProcedure"/>
+                </Grid>
+            </Border>
         </Grid>
-        <TextBlock Grid.Row="3" 
+
+        <TextBlock Grid.Row="4" 
                    Text="{Binding Message}" 
                    FontSize="22"
                    Foreground="OrangeRed"
