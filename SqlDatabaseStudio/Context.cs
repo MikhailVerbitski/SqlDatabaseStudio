@@ -29,22 +29,71 @@ namespace SqlDatabaseStudio
         }
 
         public DataTable Select(string what, string from, string param = "") => Execute($"SELECT {what} FROM {from} {param}");
-        public void Insert(string table, IEnumerable<string> columns, IEnumerable<string> values) => Execute($"INSERT INTO {$"{table}({columns.Aggregate((a, b) => $"{a}, {b}")})"} VALUES({values.Select(a => $"'{a}'").Aggregate((a, b) => $"{a}, {b}")})");
-        public void Update(string table, int id, IEnumerable<string> columns, IEnumerable<string> values) => Execute($"UPDATE {table} SET {Enumerable.Range(0, columns.Count()).Select(a => $"{columns.ElementAt(a)} = '{values.ElementAt(a)}'").Aggregate((a,b) => $"{a}, {b}")} WHERE Id = {id}");
+        public void Insert(string table, IEnumerable<string> columns, IEnumerable<string> values)
+        {
+            SqlCommand command = null;
+            try
+            {
+                command = new SqlCommand();
+                connection.Open();
+                command.Connection = connection;
+                var textValues = Enumerable.Range(0, values.Count()).Select(a => {
+                    var param = $"@param{a}";
+                    command.Parameters.AddWithValue(param, values.ElementAt(a));
+                    return param;
+                }).Aggregate((a, b) => $"{a}, {b}");
+                command.CommandType = CommandType.Text;
+                command.CommandText = $"INSERT INTO {$"{table}({columns.Aggregate((a, b) => $"{a}, {b}")})"} VALUES({textValues})";
+                command.ExecuteNonQuery();
+            }
+            finally
+            {
+                command?.Dispose();
+                connection.Close();
+            }
+        }
+        public void Update(string table, int id, IEnumerable<string> columns, IEnumerable<string> values)
+        {
+            SqlCommand command = null;
+            try
+            {
+                command = new SqlCommand();
+                connection.Open();
+                command.Connection = connection;
+                var set = Enumerable.Range(0, columns.Count()).Select(a => {
+                    var param = $"@param{a}";
+                    command.Parameters.AddWithValue(param, values.ElementAt(a));
+                    return $"{columns.ElementAt(a)} = {param}";
+                }).Aggregate((a, b) => $"{a}, {b}");
+                command.CommandType = CommandType.Text;
+                command.CommandText = $"UPDATE {table} SET {set} WHERE Id = {id}";
+                command.ExecuteNonQuery();
+            }
+            finally
+            {
+                command?.Dispose();
+                connection.Close();
+            }
+        }
         public void Delete(string table, int id) => Execute($"DELETE FROM {table} WHERE Id={id}");
         public List<string> StoredProcedures { get { return Execute("SELECT ROUTINE_NAME FROM INFORMATION_SCHEMA.ROUTINES").Rows.Cast<DataRow>().Select(a => a.ItemArray.First().ToString()).ToList(); } }
+        
         public DataTable Execute(string request)
+        {
+            using (var command = new SqlCommand(request, connection))
+            {
+                return Execute(command);
+            }
+        }
+        public DataTable Execute(SqlCommand command)
         {
             try
             {
                 connection.Open();
                 DataTable data = new DataTable();
                 int rows_returned;
-                using (var command = new SqlCommand(request, connection))
                 using (var dataAdapter = new SqlDataAdapter(command))
                 {
-                    command.CommandText = request;
-                    command.CommandType = CommandType.Text;
                     rows_returned = dataAdapter.Fill(data);
                 }
                 return data;
@@ -98,6 +147,14 @@ namespace SqlDatabaseStudio
             {
                 connection.Close();
             }
+        }
+        public void GetParametersOfStoredProcedure(string name)
+        {
+            var data = Execute("select * from sys.parameters " +
+            "inner join sys.procedures on parameters.object_id = procedures.object_id " +
+            "inner join sys.types on parameters.system_type_id = types.system_type_id AND parameters.user_type_id = types.user_type_id " +
+            $"where procedures.name = '{name}'");
+            var param = data.Rows.Cast<DataRow>().Select(a => a.ItemArray[1].ToString());
         }
 
         public void Dispose()
