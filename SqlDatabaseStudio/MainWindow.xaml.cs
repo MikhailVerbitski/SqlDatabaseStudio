@@ -18,7 +18,7 @@ namespace SqlDatabaseStudio
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private List<PairTableField> addListBoxFields;
+        private List<PairTableField> addListBoxFields = new List<PairTableField>();
         public List<PairTableField> AddListBoxFields
         {
             get { return addListBoxFields; }
@@ -29,7 +29,7 @@ namespace SqlDatabaseStudio
             }
         }
 
-        private List<TableField> addListBoxCombo;
+        private List<TableField> addListBoxCombo = new List<TableField>();
         public List<TableField> AddListBoxCombo
         {
             get { return addListBoxCombo; }
@@ -39,7 +39,18 @@ namespace SqlDatabaseStudio
                 OnPropertyChanged("AddListBoxCombo");
             }
         }
-        
+
+        private string selectedStoredProcedures;
+        public string SelectedStoredProcedures
+        {
+            get { return selectedStoredProcedures; }
+            set
+            {
+                selectedStoredProcedures = value;
+                OnPropertyChanged("SelectedStoredProcedures");
+            }
+        }
+
         public ObservableCollection<string> StoredProcedures { get; set; }
 
         public ObservableCollection<string> Tables { get; set; }
@@ -88,6 +99,17 @@ namespace SqlDatabaseStudio
             }
         }
 
+        private string numberTables;
+        public string NumberTables
+        {
+            get { return numberTables == null ? "" : $"({numberTables})"; }
+            set
+            {
+                numberTables = value == "0" ? null : value;
+                OnPropertyChanged("NumberTables");
+            }
+        }
+
         private Context context;
         private bool InsertOrUpdate = false;
 
@@ -95,6 +117,7 @@ namespace SqlDatabaseStudio
         {
             InitializeComponent();
             this.DataContext = this;
+            Closed += (obj, e) => { context?.Dispose(); };
         }
 
         public void ChangeTheme(object sender, EventArgs e)
@@ -194,6 +217,8 @@ namespace SqlDatabaseStudio
         {
             try
             {
+                CommandSQL = CommandSQL.Replace("= '", "= N'");
+                CommandSQL = CommandSQL.Replace("='", "=N'");
                 var data = context.Execute(CommandSQL);
                 RefreshSelectedTable(data);
                 SelectedTableName = "SQL Request";
@@ -232,14 +257,24 @@ namespace SqlDatabaseStudio
                 Notification(ex.Message);
             }
         }
-        public void ExecuteStoredProcedure(object sender, MouseButtonEventArgs e)
+        public void ExecuteStoredProcedure(object sender, EventArgs e)
         {
             try
             {
-                var procedureName = (sender as ListBox).SelectedItem as string;
-                context.ExecuteStoredProcedure(procedureName);
-                TableView.View = new GridView();
-                TableView.ItemsSource = new DataView();
+                var fields = AddListBoxFields.Select(a => a.Text).Concat(AddListBoxCombo.Select(a => a.TableFieldName));
+                var values = AddListBoxFields.Select(a => a.Input).Concat(AddListBoxCombo.Select(a => a.GetId()));
+                if (AddListBoxFields.Any(a => a.Input == null) || AddListBoxCombo.Any(a => a.Selected == null))
+                {
+                    Notification("Все поля должны быть заполнены");
+                    return;
+                }
+                else
+                {
+                    var data = context.ExecuteStoredProcedure(SelectedStoredProcedures, fields, values);
+                    RefreshSelectedTable(data);
+                    SelectedTableName = SelectedStoredProcedures;
+                    UpdateStoredProcedures();
+                }
                 UpdateTables();
             }
             catch (Exception ex)
@@ -247,7 +282,27 @@ namespace SqlDatabaseStudio
                 Notification(ex.Message);
             }
         }
-
+        public void StoredProceduresSelected(object sender, RoutedEventArgs e)
+        {
+            var test = context.GetParametersOfStoredProcedure(SelectedStoredProcedures);
+            AddListBoxCombo = test.Select(param =>
+            {
+                var spl = param.Substring(1).Split('_');
+                var data = context.Select(spl[1], spl[0]);
+                return new TableField()
+                {
+                    Text = spl[0],
+                    TableFieldName = param,
+                    ForeignTable = data
+                };
+            }).ToList();
+        }
+        public void CommandSQLTextChange(object sender, EventArgs e)
+        {
+            var h = (Application.Current.MainWindow.Content as Panel).ActualHeight;
+            var test = (11.22 - (h / (sender as TextBox).ActualHeight)) / 2.3;
+            (sender as TextBox).FontSize = 16 - test;
+        }
         private void RefreshSelectedTable()
         {
             InsertOrUpdate = false;
@@ -278,7 +333,7 @@ namespace SqlDatabaseStudio
         }
         private void RowDataEntryField(IEnumerable<string> columns)
         {
-            AddListBoxCombo = context.GetForeignKeys(SelectedTableName) ?? new List<TableField>();
+            AddListBoxCombo = context.GetForeignKeys(SelectedTableName)?.GroupBy(a => a.Text).Select(a => a.First()).ToList() ?? new List<TableField>();
             AddListBoxFields = columns.Except(AddListBoxCombo.Select(a => a.TableFieldName)).Select(a => new PairTableField() { Text = a }).ToList();
         }
         private void OpenDatabase(string path = null)
@@ -304,11 +359,15 @@ namespace SqlDatabaseStudio
         private void UpdateTables()
         {
             Tables = new ObservableCollection<string>(context.Tables);
+            NumberTables = Tables.Count.ToString();
             OnPropertyChanged("Tables");
         }
         private void UpdateStoredProcedures()
         {
             StoredProcedures = new ObservableCollection<string>(context.StoredProcedures);
+
+            context.GetParametersOfStoredProcedure("GetPeople");
+
             OnPropertyChanged("StoredProcedures");
         }
         private void Notification(string message, int time = 6000)

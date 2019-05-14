@@ -132,7 +132,7 @@ namespace SqlDatabaseStudio
                 .ToList() : null;
         }
 
-        public void ExecuteStoredProcedure(string procedureName)
+        public DataTable ExecuteStoredProcedure(string procedureName, IEnumerable<string> fields, IEnumerable<string> values)
         {
             try
             {
@@ -140,7 +140,19 @@ namespace SqlDatabaseStudio
                 using (var command = new SqlCommand(procedureName, connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-                    command.ExecuteNonQuery();
+
+                    for (int i = 0; i < fields.Count(); i++)
+                    {
+                        command.Parameters.AddWithValue(fields.ElementAt(i), values.ElementAt(i));
+                    }
+
+                    DataTable data = new DataTable();
+                    using (var dataAdapter = new SqlDataAdapter(command))
+                    {
+                        dataAdapter.Fill(data);
+                    }
+                    return data;
+                    //command.ExecuteNonQuery();
                 }
             }
             finally
@@ -148,13 +160,13 @@ namespace SqlDatabaseStudio
                 connection.Close();
             }
         }
-        public void GetParametersOfStoredProcedure(string name)
+        public IEnumerable<string> GetParametersOfStoredProcedure(string name)
         {
             var data = Execute("select * from sys.parameters " +
             "inner join sys.procedures on parameters.object_id = procedures.object_id " +
             "inner join sys.types on parameters.system_type_id = types.system_type_id AND parameters.user_type_id = types.user_type_id " +
             $"where procedures.name = '{name}'");
-            var param = data.Rows.Cast<DataRow>().Select(a => a.ItemArray[1].ToString());
+            return data.Rows.Cast<DataRow>().Select(a => a.ItemArray[1].ToString());
         }
 
         public void Dispose()

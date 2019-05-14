@@ -8,18 +8,18 @@
         Title="MainWindow" Height="600" Width="1200" MinHeight="400px" MinWidth="800px">
 
     <Window.Resources>
-        <!--<Style TargetType="Button">
+        <Style TargetType="Button">
             <Setter Property="FontSize" Value="18"/>
         </Style>
         <Style TargetType="GridSplitter">
             <Setter Property="Width" Value="5"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>
-        </Style>-->
-        <!--<Style TargetType="Border">
+        </Style>
+        <Style TargetType="Border">
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="BorderBrush" Value="#F9F9F9"/>
-        </Style>-->
+        </Style>
     </Window.Resources>
     
     <Grid>
@@ -54,10 +54,10 @@
                            VerticalAlignment="Center"/>
                 <TextBox Grid.Column="1"
                          Margin="3px"
-                         FontSize="14"
+                         FontSize="16"
                          TextWrapping="Wrap"
-                         AcceptsReturn="True"
-                         Text="{Binding CommandSQL}"/>
+                         TextChanged="CommandSQLTextChange"
+                         AcceptsReturn="True"/>
                 <Button Grid.Column="2" 
                         Content="Request" 
                         Margin="3px"
@@ -78,9 +78,9 @@
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*" MinWidth="200px"/>
                 <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="0.25*" MinWidth="120px"/>
-                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto" MinWidth="120px"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="0.25*" MinWidth="120px"/>
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0">
@@ -90,10 +90,12 @@
                         <RowDefinition/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                           FontSize="22"
-                           HorizontalAlignment="Center"
-                           Text="Tables"/>
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Grid.Row="0">
+                        <TextBlock FontSize="22" Text="Tables"/>
+                        <TextBlock FontSize="22" Text="{Binding NumberTables}"/>
+                    </StackPanel>
                     <ListBox Grid.Row="1"
                              ItemsSource="{Binding Tables}"
                              SelectionChanged="TableSelected">
@@ -127,10 +129,12 @@
                             <ColumnDefinition/>
                             <ColumnDefinition/>
                             <ColumnDefinition/>
+                            <ColumnDefinition/>
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0" Content="Add" Click="Add"/>
                         <Button Grid.Column="1" Content="Update" Click="Update"/>
                         <Button Grid.Column="2" Content="Remove" Click="Remove"/>
+                        <Button Grid.Column="3" Content="Save" Click="Save"/>
                     </Grid>
                 </Grid>
             </Border>
@@ -143,8 +147,28 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition/>
                         <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Stored procedure"
+                           HorizontalAlignment="Center"
+                           FontSize="22"/>
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding StoredProcedures}"
+                             SelectedItem="{Binding SelectedStoredProcedures}"
+                             SelectionChanged="StoredProceduresSelected"/>
+                    <Button Grid.Row="3" Content="Execute" Click="ExecuteStoredProcedure"/>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="5"/>
+
+            <Border Grid.Column="6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
                         <RowDefinition/>
                         <RowDefinition Height="auto"/>
+                        <RowDefinition/>
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0"
@@ -163,7 +187,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Grid.Column="0" Text="{Binding Text}"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Input}"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Input}" MinWidth="80px"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -198,25 +222,6 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <Button Grid.Row="4" Content="Save" Click="Save"/>
-                </Grid>
-            </Border>
-
-            <GridSplitter Grid.Column="5"/>
-
-            <Border Grid.Column="6">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Text="Stored procedure"
-                           HorizontalAlignment="Center"
-                           FontSize="22"/>
-                    <ListBox Grid.Row="1"
-                         ItemsSource="{Binding StoredProcedures}"
-                         MouseDoubleClick="ExecuteStoredProcedure"/>
                 </Grid>
             </Border>
         </Grid>

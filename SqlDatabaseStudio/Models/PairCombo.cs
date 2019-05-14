@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
 namespace SqlDatabaseStudio.Models
 {
-    public class TableField
+    public class TableField : IComparer<TableField>
     {
         public string Text { get; set; }
         public string TableFieldName { get; set; }
@@ -36,5 +37,10 @@ namespace SqlDatabaseStudio.Models
             }
         }
         public string GetId() => ForeignTable.Rows.Cast<DataRow>().First(a => a.ItemArray[indexField].ToString() == Selected).ItemArray.First().ToString();
+
+        public int Compare(TableField x, TableField y)
+        {
+            return x.Text.CompareTo(y.Text);
+        }
     }
 }
