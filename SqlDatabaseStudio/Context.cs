@@ -17,7 +17,7 @@ namespace SqlDatabaseStudio
             get
             {
                 connection.Open();
-                var tables = connection.GetSchema("Tables").Rows.Cast<DataRow>().Select(a => a[2].ToString());
+                var tables = connection.GetSchema("Tables").Rows.Cast<DataRow>().Select(a => a[2].ToString()).OrderBy(a => a);
                 connection.Close();
                 return tables;
             }
@@ -140,19 +140,16 @@ namespace SqlDatabaseStudio
                 using (var command = new SqlCommand(procedureName, connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-
                     for (int i = 0; i < fields.Count(); i++)
                     {
                         command.Parameters.AddWithValue(fields.ElementAt(i), values.ElementAt(i));
                     }
-
                     DataTable data = new DataTable();
                     using (var dataAdapter = new SqlDataAdapter(command))
                     {
                         dataAdapter.Fill(data);
                     }
                     return data;
-                    //command.ExecuteNonQuery();
                 }
             }
             finally

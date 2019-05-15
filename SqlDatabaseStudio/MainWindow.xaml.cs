@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
 
 namespace SqlDatabaseStudio
 {
@@ -223,6 +222,7 @@ namespace SqlDatabaseStudio
                 RefreshSelectedTable(data);
                 SelectedTableName = "SQL Request";
                 UpdateStoredProcedures();
+                Notification("Success");
             }
             catch (Exception ex)
             {
@@ -284,18 +284,28 @@ namespace SqlDatabaseStudio
         }
         public void StoredProceduresSelected(object sender, RoutedEventArgs e)
         {
-            var test = context.GetParametersOfStoredProcedure(SelectedStoredProcedures);
-            AddListBoxCombo = test.Select(param =>
+            var parameters = context.GetParametersOfStoredProcedure(SelectedStoredProcedures);
+            var bufAddListBoxCombo = new List<TableField>();
+            var bufAddListBoxFields = new List<PairTableField>();
+            foreach (var param in parameters)
             {
                 var spl = param.Substring(1).Split('_');
-                var data = context.Select(spl[1], spl[0]);
-                return new TableField()
+                if (Tables.Contains(spl[0]))
                 {
-                    Text = spl[0],
-                    TableFieldName = param,
-                    ForeignTable = data
-                };
-            }).ToList();
+                    bufAddListBoxCombo.Add(new TableField()
+                    {
+                        Text = spl[0],
+                        TableFieldName = param,
+                        ForeignTable = context.Select(spl[1], spl[0])
+                    });
+                }
+                else
+                {
+                    bufAddListBoxFields.Add(new PairTableField() { Text = spl[0] });
+                }
+            }
+            AddListBoxCombo = bufAddListBoxCombo;
+            AddListBoxFields = bufAddListBoxFields;
         }
         public void CommandSQLTextChange(object sender, EventArgs e)
         {
